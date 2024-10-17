@@ -1,0 +1,150 @@
+//for starting detector training.
+
+1)./darknet detector train custom-yolov4-tiny/darknet/data/obj.data custom-yolov4-tiny/darknet/yolov4-tiny.cfg  custom-yolov4-tiny/darknet/yolov4-tiny.weights -dont_show -map 1 2>&1 | tee -a Train_logs.txt
+
+2.)./darknet detector test custom-test-yolo-v4-tiny/darknet/labels.txt custom-test-yolo-v4-tiny/darknet/yolov4-tiny.cfg  custom-test-yolo-v4-tiny/darknet/yolov4-tiny_best.weights -dont_show -map 1 2>&1 | tee -a Test_logs.txt
+
+
+
+--------------
+
+-> /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/darknet.argo/custom-yolov4-tiny/darknet/data/test.txt
+->/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/darknet.argo/custom-test-yolo-v4-tiny/darknet/yolov4-tiny.cfg
+-> /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/darknet.argo/custom-test-yolo-v4-tiny/darknet/yolov4-tiny_best.weights
+
+->/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/darknet.argo/custom-test-yolo-v4-tiny/darknet/labels.txt
+
+->/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/darknet.argo/custom-test-yolo-v4-tiny/darknet/test_results/images
+
+->/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/darknet.argo/custom-test-yolo-v4-tiny/darknet/test_results/labels
+
+
+
+
+
+python yolo_test_script_testbench.py /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/darknet.argo/custom-yolov4-tiny/darknet/data/test.txt /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/darknet.argo/custom-test-yolo-v4-tiny/darknet/yolov4-tiny.cfg /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/darknet.argo/custom-test-yolo-v4-tiny/darknet/yolov4-tiny_best.weights /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/darknet.argo/custom-test-yolo-v4-tiny/darknet/labels.txt /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/darknet.argo/custom-test-yolo-v4-tiny/darknet/test_results/images /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/darknet.argo/custom-test-yolo-v4-tiny/darknet/test_results/labels
+
+
+
+
+
+
+
+ python generate_label.py --model-cfg yolov4-tiny.cfg --model-weights yolov4-tiny_best.weights --image test-images/ --output-dir output1
+
+
+
+
+
+python generate_label.py --model-cfg yolov3-tiny.cfg --model-weights yolov3-tiny_best.weights --image test/IMG_20100101_023139.jpg --output-dir output1
+
+
+LD_LIBRARY_PATH=/home/sgaurav/anaconda3/lib:$LD_LIBRARY_PATH
+
+
+
+
+
+ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
+
+ln = [ln [i - 1] for i in net.getUnconnectedOutLayers()]
+
+
+
+###To print person bbox coordinates with calib then print with this
+
+if (className == "person")
+      {
+        object.objType = "PERSON";  
+        if(m_alertContext.detectorName == "VTDet_pose" ||
+            m_alertContext.detectorName == "VTDet5_pose" ||
+            m_alertContext.detectorName == "VTDet6_pose")
+        {
+          PerPoseDetection& poseInfo= *objData.poseInfoPtr;
+          object.personPoseInfo = poseInfo;
+        }     
+        personsInfo[trackID] = object;
+        Rect roi = boundingRect(detPtr.roi);
+        Point2f groundPt1, groundPt2;
+
+        if (roi.x > 0 && roi.y > 0 && roi.y < m_engineCxt.height - 1
+            && roi.x < m_engineCxt.width -1 && (roi.y + roi.height) < m_engineCxt.height &&
+            (roi.x + roi.width) < m_engineCxt.width){
+          groundPt1 = (cv::Point) m_lengthMap.at<Vec2f>(roi.y + roi.height, roi.x);
+          groundPt2 = (cv::Point) m_lengthMap.at<Vec2f>(roi.y + roi.height, roi.x + roi.width);
+        }
+        DOLOGGING(m_engineLogger, KMisc::DEBUG2,
+                  "\n \tRect: (%d,%d,%d,%d), Class Name: %s,"
+                  " Bottom Left Person: (%.2f,%.2f), Bottom Right Person: (%.2f,%.2f)",
+                  roi.x, roi.y,
+                  roi.x + roi.width,
+                  roi.y + roi.height,
+                  detPtr.classname.c_str(),
+                  groundPt1.x, groundPt1.y,
+                  groundPt2.x, groundPt2.y);
+
+
+
+
+
+###
+
+
+if (className == "person")
+      {
+        object.objType = "PERSON";  
+        if(m_alertContext.detectorName == "VTDet_pose" ||
+            m_alertContext.detectorName == "VTDet5_pose" ||
+            m_alertContext.detectorName == "VTDet6_pose")
+        {
+          PerPoseDetection& poseInfo= *objData.poseInfoPtr;
+          object.personPoseInfo = poseInfo;
+        }     
+        personsInfo[trackID] = object;
+        Rect roi = boundingRect(detPtr.roi);
+        Point2f groundPt1, groundPt2;
+
+        if (roi.x > 0 && roi.y > 0 && roi.y < m_engineCxt.height - 1
+            && roi.x < m_engineCxt.width -1 && (roi.y + roi.height) < m_engineCxt.height &&
+            (roi.x + roi.width) < m_engineCxt.width){
+          groundPt1 = (cv::Point2f) m_lengthMap.at<Vec2f>(roi.y + roi.height, roi.x);
+          groundPt2 = (cv::Point2f) m_lengthMap.at<Vec2f>(roi.y , roi.x );
+        }
+        DOLOGGING(m_engineLogger, KMisc::DEBUG2,
+                  "\n \tRect: (%d,%d,%d,%d), Class Name: %s,"
+                  " Bottom Left Person: (%.2f,%.2f), Top Left Person: (%.2f,%.2f)",
+                  "Height": (%.2f,%.2f)
+                  roi.x, roi.y,
+                  roi.x + roi.width,
+                  roi.y + roi.height,
+                  detPtr.classname.c_str(),
+                  groundPt1.x, groundPt1.y,
+                  groundPt2.x, groundPt2.y);
+      }
+
+
+###
+
+
+np.max(detections.area): This calculates the maximum value of the area attribute in the detections array. np typically refers to the NumPy library in Python.
+
+detections.area == np.max(detections.area): This creates a boolean mask by checking for each detection whether its area is equal to the maximum area.
+
+detections[detections.area == np.max(detections.area)]: This uses the boolean mask to filter and keep only the detections that have an area equal to the maximum area.
+
+In summary, this line of code retains only those detections whose area is equal to the maximum area among all detections. It's a way of filtering or selecting detections based on a specific criterion, in this case, their area.
+
+This could be useful in scenarios where you want to focus on or analyze specific detections with the largest area, which might be of particular interest in certain applications.
+
+
+#####
+
+/nfs/nas2VehiScan/DataRepo/Site_Raw_Data/PPEye/Hygiene/VA_DATA/Fire_Smoke/Fire_Smoke_09April
+
+
+
+/nfs/nas2VehiScan/DataRepo/Site_Raw_Data/PPEye/Hygiene/VA_DATA/Fire_Smoke/Fire_Smoke_09April
+
+
+
+

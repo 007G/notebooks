@@ -1,0 +1,1230 @@
+1. Path where all files are present which are required for model training:
+
+->/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/fire_yolov4_maheshdata
+
+# backup  obj.data  obj.names  train.txt  val.txt  yolov4.cfg  yolov4.conv.137  yolov4.weights
+
+2.For training model in omega:
+
+->ssh -X sgaurav@omega
+# extra char pass
+
+3.cd /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/Omega/darknet
+
+4. . set_env.sh
+
+5. ./darknet detector train ../../fire_yolov4_maheshdata/obj.data ../../fire_yolov4_maheshdata/yolov4.cfg yolov4.conv.137 -clear 1 2>&1  | tee -a trainingLog2022s0914.log
+
+?use -clear to start from previous weights. if you want to start fresh use the flag.
+
+6.(NS)  to generate bb on test dataset
+
+-> python generate_label.py --model-cfg vtyolov3-fire.cfg --model-weights vtyolov3-fire.weights --image yt_test_images/ --output-dir output1
+
+7.(NS) To extract frames from video or to create a new test dataset
+
+-> mkdir fire_200frame_ext
+
+8. (NS) 
+
+-> /opt/ffmpeg-2.8.8_x264_v142-qsv/bin/ffmpeg -hide_banner -i output1.mp4 fire_200frame_ext/frame%06d.jpg
+
+9. /opt/ffmpeg-2.8.8_x264_v142//bin/ffmpeg -hide_banner -i Massive\ Fire\ Rips\ Through\ Apartment\ Complex\ In\ Tustin.mp4  fire_200frame_ext/frame%06d.jpg
+
+
+10.To remove extra frames and to change permission level of folder & to trim the downloaded video by giving start time & end time.
+
+-> cd gaurav_deepstream/
+ 1229  ls
+ 1230  cd fire_200frame_ext/
+ 1231  ls
+ 1232  eog frame004235.jpg
+ 1233  rm -f frame00[1-7]???.jpg
+ 1234  ls
+ 1235  rm -f frame000[3-9]??.jpg
+ 1236  ls
+ 1237  rm -f frame000??[1-9].jpg
+ 1238  ls | wc -l
+ 1239  ls
+ 1240  chmod +777 /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/fire_yolov4_maheshdata/backup/
+ 1241  chmod +777 /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/fire_yolov4_maheshdata/backup
+ 1242  /opt/ffmpeg-2.8.8_x264_v142/bin/ffmpeg -i Massive\ Fire\ Rips\ Through\ Apartment\ Complex\ In\ Tustin.mp4 -ss 00:00:00 -t 00:00:30 -c:v copy -c:a copy /home/okean/gaurav_deepstream/output1.mp4
+ 1243  cd ..
+ 1244  cd -
+
+11. To create train/val set of images with their path 
+
+-> vi file1.txt
+:15 ( no of line)
+v
+Shift + g
+FN + right arrow
+d
+:vs newfile.txt
+p
+ctrl ww
+:wqa
+
+
+12.to copy all jpg files path in some txt
+
+->readlink -f *.jpg > file.txt
+
+13.To calculate mAP score:
+
+->/home/sgaurav/map/mAP/main.py
+
+#input  LICENSE  main.py  output  README.md  scripts
+
+(base) [sgaurav@blazerwifi mAP]$ cd input/
+(base) [sgaurav@blazerwifi input]$ ls
+#detection-results  ground-truth  images-optional
+
+-> inside detection results add the newly generated labels on the dataset. And in the ground truth add the annoted data and the images in this folder,and in the images-optional folder add the images of the dataset.
+
+->If the images and labels are more than each other the run this
+
+#/home/sgaurav/map/mAP/scripts/extra/intersect-gt-and-dr.py
+
+
+14.Newly created test dataset by extrating frames of fire&smoke
+
+->/home/sgaurav/custom-test-yolo-v4-tiny/yt_test_images/
+
+# TO GREP PARTICULAR KEYWORD
+tail -f R297_PPEngine.log | grep LINECROSS
+
+----
+
+
+1./home/okean/gaurav_deepstream/pytorch-YOLOv4/yolov4_firesmoke/onnx
+
+/home/okean/gaurav_deepstream/ppeye/DeepStream/deepstreamMgr/config/pgie_yolov4_fire_smoke_config.txt
+
+2.To train yolov4 model in deepstream
+
+-> cd /home/okean/gaurav_deepstream/pytorch-YOLOv4/
+->conda activate demo_env
+->vi darknet2onnx.sh 
+# ADD the config path and the labelfile path and comment the model engine file if running for the first time.
+->save the file
+->change the image file
+->Run . darknet2onnx.sh 
+
+
+"""
+
+cd gaurav_deepstream/
+ 2002  cd /home/okean/gaurav_deepstream/pytorch-YOLOv4/
+ 2003  ls
+ 2004  . darknet2onnx.sh 
+ 2005  conda activate demo_env
+ 2006  . darknet2onnx.sh 
+ 2007  pip install opencv-python
+ 2008  vi darknet2onnx.sh 
+ 2009  . darknet2onnx.sh 
+ 2010  pwd
+ 2011  realpath shivam_frame000370.jpg 
+ 2012  vi darknet2onnx.sh 
+ 2013  . darknet2onnx.sh 
+ 2014  ls -lrth
+ 2015  ls
+ 2016  mkdir yolov4_firesmoke
+ 2017  cd yolov4_firesmoke/
+ 2018  ls
+ 2019  mkdir onnx
+ 2020  ls
+ 2021  cd onnx
+ 2022  pwd
+ 2023  cd ..
+ 2024  ls
+ 2025  cd ..
+ 2026  ls
+ 2027  ls -lrth
+ 2028  cp yolov4_1_3_416_416_static.onnx /home/okean/gaurav_deepstream/pytorch-YOLOv4/yolov4_firesmoke/onnx/
+ 2029  cd /home/okean/gaurav_deepstream/pytorch-YOLOv4/yolov4_firesmoke/onnx
+ 2030  ls
+
+in the DSConfig file detector name would be the name of pgie file (after pgie and before config part).
+
+./initModule/dsinit /var/okean/conf/DSConfig_gaurav.xml
+
+
+
+
+"""
+
+-> TO ADD PREFIX TO FILENAMES/IMAGES:
+
+ls | xargs -I {} mv {} PRE_{}
+
+
+-> TO START TRAFFSCAN:
+---------------------------------
+path - /home/sgaurav/TrafScan_YoloDataGen
+. ./Traffscan.sh 
+./bin/TScanYoloDataGen.15May fire_smoke.conf
+
+
+->TO EXPORT IMP FILES FOR YOLO_MARK
+-------------------------------------
+
+export LD_LIBRARY_PATH=/opt/hdf5_103/lib/:/opt/hdf5/lib/::/opt/xview2_64/lib/:/opt/opencv-3.4.2/lib64/:/opt/ffmpeg-2.8.8_x264_v142-qsv/lib/:/opt/intel/openvino_2020.3.194/data_processing/dl_streamer/lib:/opt/intel/openvino_2020.3.194/data_processing/gstreamer/lib:/opt/intel/openvino_2020.3.194/opencv/lib:/opt/intel/openvino_2020.3.194/deployment_tools/ngraph/lib:/opt/intel/openvino_2020.3.194/deployment_tools/inference_engine/external/hddl/lib:/opt/intel/openvino_2020.3.194/deployment_tools/inference_engine/external/gna/lib:/opt/intel/openvino_2020.3.194/deployment_tools/inference_engine/external/mkltiny_lnx/lib:/opt/intel/openvino_2020.3.194/deployment_tools/inference_engine/external/tbb/lib:/opt/intel/openvino_2020.3.194/deployment_tools/inference_engine/lib/intel64:
+
+
+
+
+-> TO get the labels/images from the txt file path
+-----------------------------------------------------
+
+import os
+import shutil
+
+src = '/home/okean/mahesh_deepstream/darknet_old/data/obj/'
+dst = '/home/okean/mahesh_deepstream/darknet_old/data/label_needed/'
+
+#os.makedirs(dst, exist_ok=True)  # create destination folder if not exists
+
+filenames = open("imgg_label.txt").read().split('\n')
+
+for name in filenames:
+    if name:  # to skip empty lines
+        fullpath = os.path.join(src, name + '.txt')
+        if os.path.exists(fullpath):
+            print('coping:', fullpath)
+            shutil.copy(fullpath, dst)
+        else:
+            print('SKIPING:', fullpath)
+
+or by this way:
+find . -type f -name "*.jpg" | sed 's/\.jpg$/.txt/' | xargs -I {} touch {}
+
+-> How to copy data from local to nfs for images(train/test)split:
+-----------------------------------------------------------------------
+
+scp -r new_final_dataset_fire2.0/ sgaurav@arrow:/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/vtyolov3_fire_new_model/data/
+
+
+-> How to watch any running processes on nvidia gpu
+watch -n 0.5 nvidia-smi
+
+## To train in arrow machine login with arrow and !@pass and then for set env go one folder behind sgaurav to Darknet.arrow and do set_env there.
+
+## TO search a keyword in linux across directory with giving matching line number 
+grep -rn "string" *
+
+## TO find & replace a keyword in vi editor 
+:%s/foo/bar/g or sed -i '/^1/d' *.txt  for permanent changes
+
+after that to delete empty txt files use,
+#find . -type f -empty -print -delete
+
+## To get a particular class labels file
+sed '/^1/d' sample.txt > ab.txt // replace 1 with any no
+
+##To remove a path till the image name using sed:
+sed 's|vehcolor_two_wheeler_data_all/Black/||' TESTBLACK.txt
+
+##TO remove last coloum in all txt using sed
+sed 's/ 1$//' TestBlack.txt > TESTBLACK.txt
+
+#sed -i 's/ [0-9]*$//' cpy_val.txt
+
+##TO append/add from the start to each line in vi editor
+-Press Esc to enter 'command mode'
+-Use Ctrl+V to enter visual block mode
+-Move Up/Downto select the columns of text in the lines you want to comment.
+-Then hit Shift+i and type the text you want to insert.
+-Then hit Esc, wait 1 second and the inserted text will appear on every line.
+
+##TO view code in git repo for analytics:
+http://cometdrive.vehant.in:10101/vehant/ppeye/-/commit/3d06813f27f8ea259e72ecdc1f793d963897d8fa
+
+##TO EXTRACT VIDEO FRAMES USING YOLO MARK:
+./yolo_mark x64/Release/data/img cap_video /home/sgaurav/P01C020-20220129200531.avi 10 (10 - TIME)
+
+##TO train yolov4 on omega 
+
+./darknet detector train ../../yolov4_on_new_data_final/obj.data ../../yolov4_on_new_data_final/yolov4.cfg ../../yolov4_on_new_data_final/yolov4_final.weights   | tee -a trainingLog20221002.log
+
+./darknet detector train ../../yolov3_night_data/obj.data ../../yolov3_night_data/final_yolov4.cfg ../../yolov3_night_data/final_yolov4.weights -clear 1 2>&1  |   tee -a ../../yolov3_night_data/trainingLog20221002.log
+
+./darknet detector train ../../yolov3_night_data/obj.data ../../yolov3_night_data/final_yolov4.cfg ../../yolov3_night_data/final_yolov4.weights | tee -a ../../yolov3_night_data/trainingLog20221215.log
+
+##TMUX cmd
+
+-tmux
+-type the cmd which you want to run like
+./darknet detector train ../../yolov4_on_new_data_final/obj.data ../../yolov4_on_new_data_final/yolov4.cfg ../../yolov4_on_new_data_final/yolov4_final.weights   | tee -a trainingLog20221002.log
+
+-ctrl and b together + d to detach
+-to re-attach-> tmux attach
+
+## How to copy n no of files to another folder
+$ find . -maxdepth 1 -type f |head -1000|xargs cp -t "$destdir"
+
+## VIM DIFF
+diff 1st_run_deepstreamConfig.txt 2nd_run_deepstreamConfig.txt
+
+##TO PARSE LOG USING LOG PARSER SCRIPT:
+WHERE IS THE SCRIPT ->/home/sgaurav/log_parser/
+CMD -  python log_parser.py --source-dir /home/sgaurav/log_parser/ --save-dir /home/sgaurav/log_parser/  --log-file trainingLogSmoke20221221.log --show true
+
+##TO CALCULATE THE MAP SCORE USING DETECTOR (WHERE YOU HAVE STARTED DARKNET TRAINING ON ARROW OR OMEGA)
+
+PATH -/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/Omega/darknet
+cmd - ./darknet detector map ../../yolov3_night_data/smoke_obj.data ../../yolov3_night_data/yolov4_smoke.cfg ../../yolov3_night_data/backup_smoke/yolov4_smoke_25000.weights
+
+----------------------------------------------------------------------------------------------------
+export LD_LIBRARY_PATH=/opt/hdf5_103/lib/:/opt/hdf5/lib/::/opt/xview2_64/lib/:/opt/opencv-3.4.2/lib64/:/opt/ffmpeg-2.8.8_x264_v142-qsv/lib/:/opt/intel/openvino_2020.3.194/data_processing/dl_streamer/lib:/opt/intel/openvino_2020.3.194/data_processing/gstreamer/lib:/opt/intel/openvino_2020.3.194/opencv/lib:/opt/intel/openvino_2020.3.194/deployment_tools/ngraph/lib:/opt/intel/openvino_2020.3.194/deployment_tools/inference_engine/external/hddl/lib:/opt/intel/openvino_2020.3.194/deployment_tools/inference_engine/external/gna/lib:/opt/intel/openvino_2020.3.194/deployment_tools/inference_engine/external/mkltiny_lnx/lib:/opt/intel/openvino_2020.3.194/deployment_tools/inference_engine/external/tbb/lib:/opt/intel/openvino_2020.3.194/deployment_tools/inference_engine/lib/intel64:/opt/ffmpeg-2.8.8_x264_v142-qsv/lib/libavcodec.so.56.60.100
+
+-----------------------------------------------------------------------------------------------------
+
+#Steps to run Test Bench
+
+Usage:
+1. Go to /home/sgaurav/TestBench/bin/
+2. Export LD paths by . ./gaurav_use_this_env.sh
+3. Run Binary with config ./Gauravs_testbenchgui Gauravs_config.xml
+ 
+#1.How to run Non DS Binary:
+---------------------------
+
+-> ssh ppeye@10.33.11.223
+pass - ppeye@vt
+
+-> open two terminal
+-> . set_env.sh
+-> cd rajagopalar/ppeye/temp/PPDaemon/
+-> ./PPDaemon_20221109 ~/rajagopalar/xml/PPDaemon1.xml (1st terminal)
+-> . /var/ppeye/conf/run_framgraber.sh (2nd Terminal)
+
+ const map<string,vector<pair<struct timeval, Point>>> objTrajectoryPts = {};
+      string objectID = objID;
+      cout <<objectID <<endl;
+      if (objType == "PERSON")
+      {
+        cout << "#########PERSON ##############" <<endl;
+      //if(objTrajectoryPts.find(objType) == objTrajectoryPts.end())
+      //if(objType == "PERSON")
+      //{
+        //for person,vehicle and other class we will not pass objTrajectoryPts to the addZoneObjEvent
+       //cout <<"Person Trajectory points" <<endl;
+       //addZoneObjEvent(eventType, eventFlag, zoneID, objID, objType, frameTime, eventLevel, eventMeta, configMeta);
+      //}
+      //else
+      //{
+        //passing the objTrajectoryPts to the addZoneObjEvent
+       //addZoneObjEvent(eventType, eventFlag, zoneID, objID, objType, objTrajectoryPts,frameTime, eventLevel, eventMeta, configMeta);
+       addZoneObjEvent(eventType, eventFlag, zoneID, objID, objType, frameTime, eventLevel, eventMeta, configMeta);
+      //} 
+      }
+
+
+
+--------------$$$$$$$$$$$$$$$$$$$$$$$$$
+
+1.How to run Non DS Binary:
+---------------------------
+
+-> ssh ppeye@10.33.11.223
+pass - ppeye@vt
+
+-> open two terminal
+-> . set_env.sh
+-> cd rajagopalar/ppeye/temp/PPDaemon/
+-> ./PPDaemon_20221109 ~/rajagopalar/xml/PPDaemon1.xml (1st terminal)
+-> . /var/ppeye/conf/run_framgraber.sh (2nd Terminal)
+
+
+
+
+1.How to run Non DS Binary:
+---------------------------
+
+-> ssh ppeye@10.33.11.223
+pass - ppeye@vt
+
+-> open two terminal
+-> . set_env.sh
+-> cd rajagopalar/ppeye/temp/PPDaemon/
+-> ./PPDaemon_20221109 ~/rajagopalar/xml/PPDaemon1.xml (1st terminal)
+-> . /var/ppeye/conf/run_framgraber.sh (2nd Terminal)
+
+
+---------------------------------------
+Log Dir - /var/ppeye/log/PPDaemonLog/
+
+-rw-rw-r-- 1 ppeye ppeye    0 Nov 10 10:08 V001_dump.log
+-rw-rw-r-- 1 ppeye ppeye 219K Nov 17 14:27 V001_check.log
+-rw-rw-r-- 1 ppeye ppeye  14M Nov 17 14:27 V001_PPEngine.log
+-rw-rw-r-- 1 ppeye ppeye  11M Nov 17 14:27 V001_detector.log
+-rw-rw-r-- 1 ppeye ppeye 954K Nov 17 14:27 V001_PPGrabber.log
+
+<DETECTOR_CONFIG_PATH> /home/ppeye/rajagopalar/xml/PPZoneDetails1.xml </DETECTOR_CONFIG_PATH>
+
+<OBJ_DETECT_MODEL_DIR>/var/ppeye/bin/models/yolov3-coco/opencv.conf</OBJ_DETECT_MODEL_DIR>
+
+weightFile = /var/ppeye/bin/models/yolov3-coco/yolov3_last_enc.weights
+
+cfgFile = /var/ppeye/bin/models/yolov3-coco/yolov3_enc.cfg
+
+namesFile = /var/ppeye/bin/models/yolov3-coco/coco.names
+
+
+vi /var/ppeye/conf/frameGrabber.xml
+
+<17/11/2022 15:08:21 279994 5> EngCommunicator : Group Trans Id is E001V0010-20221117900003 and zone is Z002 for EventId from Engine is  CROWD is present for E001V0010-20221117900003 are 3
+
+
+FIRE_SMOKE_MODEL:NON DS
+/home/ppeye/rajagopalar/models
+
+###Config Error::Mismatch Camera & Config Setting Width=1280 Height=720 Desired Width:1920 Desired Height:1080###
+
+
+
+export PP_ENGINE_PATH=/home/ppeye/rajagopalar/ppeye/PPEngine/
+
+cd $PP_ENGINE_PATH
+make clean; make distclean; make -j4
+/home/ppeye/rajagopalar/ppeye/temp/PPDaemon
+
+make clean; make distclean; make -j4
+
+--------------------------------------------------
+
+1.TO CONVERT MP4 TO .H264 VIDEO ON LOCAL SYSTEM
+
+-export all the paths
+
+-/opt/ffmpeg-2.8.8_free_withLibMFX/bin/ffmpeg -i vir_trim.mp4 -an -vcodec libx264 vir.h264
+
+------------------$$$$$$$$$$$$
+PPENGAttr.cppa
+// update fire
+    if (m_engineCxt.doFireDet)
+    {
+      if (m_context.engineMode == NON_DEEPSTREAM_ALL)
+        updateFireAtNonDS(currFrameColor, m_allVehiclesInfoMap, 
+                          m_combinedObjDataVec, frameTime);
+
+
+<SMOKE_MAX_DISC_TIME>0</SMOKE_MAX_DISC_TIME>
+                <SMOKE_MAX_OUT_TIME>0</SMOKE_MAX_OUT_TIME>
+
+<RULES>
+                <FIRE_MAX_DISC_TIME>0</FIRE_MAX_DISC_TIME>
+                <FIRE_MAX_OUT_TIME>0</FIRE_MAX_OUT_TIME>
+                </RULES>
+    }
+
+./darknet detector train ../../yolov3_night_data/smoke_obj.data ../../yolov3_night_data/yolov4_smoke.cfg ../../yolov3_night_data/yolov4-sam-mish.weights -clear 1 2>&1  | tee -a ../../yolov3_night_data/trainingLogSmoke20221221.log
+
+The encoder is for extracting feature maps and decoder for recovering feature map resolution.
+
+The encoder computes
+the representation of the image as lower features vector, and
+then the decoder decodes the vector to a full resolution
+image; the architecture shares information between parts in the encoder-decoder. The model uses a deep learning
+network such as ResNet[5]. The model can use pre-trained
+ResNet such as ImageNet or CoCo[4] to initialize the
+algorithm. Using pre-trained models is important when
+there are a few images for training. Choosing this
+architecture is not the only important factor to get high
+performance but also the choice of the components of UNET. Instance segmentation can be done using U-NET.
+U-NET
+
+#There are various neural network designs and implementations suitable for image segmentation. They usually contain the same basic components:
+
+An encoder—a series of layers that extract image features using progressively deeper, narrower filters. The encoder might be pre-trained on a similar task (e.g., image recognition), allowing it to leverage its existing knowledge to perform segmentation tasks.
+A decoder—a series of layers that gradually convert the encoder’s output into a segmentation mask corresponding with the input image’s pixel resolution. 
+Skip connections—multiple long-range neural network connections allowing the model to identify features at different scales to enhance model accuracy.
+
+
+###
+Image segmentation is a sub-domain of computer vision and digital image processing which aims at grouping similar regions or segments of an image under their respective class labels. 
+
+Since the entire process is digital, a representation of the analog image in the form of pixels is available, making the task of forming segments equivalent to that of grouping pixels.
+
+Image segmentation is an extension of image classification where, in addition to classification, we perform localization. Image segmentation thus is a superset of image classification with the model pinpointing where a corresponding object is present by outlining the object's boundary. 
+
+In computer vision, most image segmentation models consist of an encoder-decoder network as compared to a single encoder network in classifiers.
+
+The encoder encodes a latent space representation of the input which the decoder decodes to form segment maps, or in other words maps outlining each object’s location in the image.
+
+Semantic segmentation
+Semantic segmentation refers to the classification of pixels in an image into semantic classes. Pixels belonging to a particular class are simply classified to that class with no other information or context taken into consideration. 
+
+Instance segmentation
+Instance segmentation models classify pixels into categories on the basis of “instances” rather than classes. 
+An instance segmentation algorithm has no idea of the class a classified region belongs to but can segregate overlapping or very similar object regions on the basis of their boundaries. 
+
+Traditional Image Segmentation techniques
+Image segmentation originally started from Digital Image Processing coupled with optimization algorithms. These primitive algorithms made use of methods like region growing and snakes algorithm where they set up initial regions and the algorithm compared pixel values to gain an idea of the segment map. 
+
+These methods took a local view of the features in an image and focused on local differences and gradients in pixels. 
+
+Algorithms that took a global view of the input image came much later on with methods like adaptive thresholding, Otsu’s algorithm, and clustering algorithms being proposed amongst classical image processing methods.
+
+*Thresholding is one of the easiest methods of image segmentation where a threshold is set for dividing pixels into two classes. Pixels that have values greater than the threshold value are set to 1 while pixels with values lesser than the threshold value are set to 0. 
+
+The image is thus converted into a binary map, resulting in the process often termed binarization. Image thresholding is very useful in case the difference in pixel values between the two target classes is very high, and it is easy to choose an average value as the threshold.
+
+*Region-Based Segmentation
+Region-based segmentation algorithms work by looking for similarities between adjacent pixels and grouping them under a common class. 
+
+Edge Segmentation
+Edge segmentation, also called edge detection, is the task of detecting edges in images. 
+
+*From a segmentation-based viewpoint, we can say that edge detection corresponds to classifying which pixels in an image are edge pixels and singling out those edge pixels under a separate class correspondingly. 
+
+Clustering-based Segmentation
+Modern segmentation procedures that depend on image processing techniques generally make use of clustering algorithms for segmentation. 
+
+*Clustering algorithms perform better than their counterparts and can provide reasonably good segments in a small amount of time. Popular algorithms like the K-means clustering algorithms are unsupervised algorithms that work by clustering pixels with common attributes together as belonging to a particular segment. 
+
+-Convolutional Encoder-Decoder Architecture
+Encoder decoder architectures for semantic segmentation became popular with the onset of works like SegNet (by Badrinarayanan et. a.) in 2015.
+
+SegNet proposes the use of a combination of convolutional and downsampling blocks to squeeze information into a bottleneck and form a representation of the input. The decoder then reconstructs input information to form a segment map highlighting regions on the input and grouping them under their classes.
+
+Finally, the decoder has a sigmoid activation at the end that squeezes the output in the range (0,1). 
+
+SegNet was accompanied by the release of another independent segmentation work at the same time, U-Net ( by Ronnerberger et. al.), which first introduced skip connections in Deep Learning as a solution for the loss of information observed in downsampling layers of typical encoder-decoder networks. 
+
+Skip connections are connections that go from the encoder directly to the decoder without passing through the bottleneck. 
+
+in other words, feature maps at various levels of encoded representations are captured and concatenated to feature maps in the decoder. This helps to reduce data loss by aggressive pooling and downsampling as done in the encoder blocks of an encoder-decoder architecture. 
+
+Problems:
+
+Some applications include autonomous driving, scene understanding, etc. Direct adoption of classification networks for pixel wise segmentation yields poor results mainly because max-pooling and subsampling reduce feature map resolution and hence output resolution is reduced. 
+
+SegNet — Challenges
+Trained on road scene datasets hence, classes represent macro objects, hence segmentations are desired to be smooth
+Boundary information is critical for objects like road markings and other small objects. (Boundary delineation)
+Major use cases will be embedded systems hence it must be Computationally Efficient
+
+Encoder-Decoder pairs are used to create feature maps for classifications of different resolutions.
+
+Each encoder is like Fig 3. The novelty is in the subsampling stage, Max-pooling is used to achieve translation invariance over small spatial shifts in the image, combine that with Subsampling and it leads to each pixel governing a larger input image context (spatial window). These methods achieve better classification accuracy but reduce the feature map size, this leads to lossy image representation with blurred boundaries which is not ideal for segmentation purpose. It is desired that output image resolution is same as input image, to achieve this SegNet does Upsampling in its decoder, to do that it needs to store some information. It is necessary to capture and store boundary information in the encoder feature maps before sub-sampling. In order to to that space efficiently, SegNet stores only the max-pooling indices i.e. the locations of maximum feature value in each pooling window is memorised for each encoder map. Only 2 bits are needed for each window of 2x2, slight loss of precision, but tradeoff.
+
+Decoder
+For each of the 13 encoders there is a corresponding decoder which upsamples the feature map using memorised max-pooling indices
+Sparse feature maps of higher resolutions produced
+Sparse maps are fed through a trainable filter bank to produce dense feature maps
+The last decoder is connected to a softmax classifier which classifies each pixel
+
+
+-----------------nomenclature changes-----------------------
+/nfs/nas2VehiScan/DataRepo/DL_Models/VA_Models/deepstreamConf/pgie_VTDet1_config.txt
+/nfs/nas2VehiScan/DataRepo/DL_Models/VA_Models/deepstreamConf/pgie_VTDetLite1_config.txt
+/nfs/nas2VehiScan/DataRepo/DL_Models/VA_Models/deepstreamConf/sgie_helmet_config.txt
+
+
+files
+okean@argo vi DeepStream/yoloParser/tensorrt8/nvdsinfer_yolo_engine.cpp
+vi DeepStream/deepstreamMgr/config/pgie_VTDet1_config.txt 
+
+
+ 2064  cd /var/okean/bin/deepstreamModels/
+ 2065  cp -r yolov3 VTDet1
+
+
+cd VTDet1/
+ 2067  ls
+ 2068  cd darknet/
+ 2069  ls
+ 2070  mv yolov3.cfg VTDet1.cfg
+ 2071  mv yolov3.weights VTDet1.weights
+ 2072  ls
+
+
+vi ./DeepStream/yoloParser/tensorrt8/nvdsinfer_yolo_engine.cpp
+ 2106  vi /var/okean/bin/deepstreamModels/yoloParser/nvdsinfer_yolo_engine.cpp 
+ 2107  cd /var/okean/bin/deepstreamModels/yoloParser/
+ 2108  ls
+ 2109  rm -f *.o
+ 2110  make 
+
+
+ 2115  ./initModule/dsinit /var/okean/conf/HELIX_DSConfig_gaurav.xml 
+ 2116  vi /var/okean/bin/deepstreamModels/yoloParser/nvdsinfer_yolo_engine.cpp 
+ 2117  cd /var/okean/bin/deepstreamModels/yoloParser/
+ 2118  rm -f *.o
+ 2119  make -j4
+ 2120  cd -
+
+
+#TO get values from map of type:(map<int, vector<string>> clusterMap;)
+ for ( const auto &p : clusterMap )
+      {
+           cout << p.first << " :";
+           for ( const auto &s : p.second )
+           {
+               cout << ' ' << s;
+           }
+           cout << endl;
+       }
+
+
+#For commenting and remove comments via vim visual method:
+
+For those tasks I use most of the time block selection.
+
+Put your cursor on the first # character, press Ctrl``V (or Ctrl``Q for gVim), and go down until the last commented line and press x, that will delete all the # characters vertically.
+
+For commenting a block of text is almost the same: First, go to the first line you want to comment, press Ctrl``V, and select until the last line. Second, press Shift``I``#``Esc (then give it a second), and it will insert a # character on all selected lines. For the stripped-down version of vim shipped with debian/ubuntu by default, type : s/^/# in the second step instead.
+----------------------------
+
+Case: As per the logic , if we get minimum 10 detections in 60 sec, event will be generated.
+
+Suppose we get 1st frame at  1st sec and we push frametime into m_fireDetails.push_back() , then there was no fire for 60 sec, then from 65th to 75th sec we get fire and we push frametime of each frame in m_fireDetails using push_back(). 
+
+Now as per the logic :
+
+for (int i = 0; i < m_fireDetails.size(); i++)
+    {
+        if ((frameTime.tv_sec - m_fireDetails[i]) < DETECTION_DURATION)
+        {
+            fireCount += 1;
+        }
+        else
+        {
+            break;
+        }
+    }
+    //check if this count is greater than THRESHOLD_DETECTION_COUNT
+    if (fireCount > THRESHOLD_DETECTION_COUNT && numFire)
+        isFire = true;
+    return isFire;
+
+-> When we check (frameTime.tv_sec - m_fireDetails[i]) < DETECTION_DURATION) this condition , we will see  current time - 1st frame time (ie: 1 sec) < 60  will always be bigger so it will go in else block and the flow will break. So  it will always break as we are checking from the start.
+
+To fix this we can iterate the loop from back to resolve this issue.
+
+for (int i = m_fireDetails.size()-1; i >= 0; i--)
+
+
+
+#Connect to VPN:
+
+1.cd /home/sgaurav/Desktop/GauravSingh
+2.sudo openvpn client.ovpn
+
+/home/okean/gaurav_deepstream/MTHL/EFKON_thermal_1.avi
+/home/okean/gaurav_deepstream/MTHL/Efkon_sec94_video1_Thermal.avi
+/home/okean/gaurav_deepstream/MTHL/
+
+#How to run opencv on argo
+export PKG_CONFIG_PATH=/opt/intel/openvino_2020.1.023/opencv/lib/pkgconfig/$PKG_CONFIG_PATH
+If error on runtime then check LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/opt/intel/openvino_2020.1.023/opencv/lib/
+g++ -std=c++11 check.cpp `pkg-config --cflags --libs opencv`  -o check 
+
+##TO generate empty txt for images:
+import os
+for f in os.listdir(source_dir):
+    if f.endswith('.jpg'):
+        file_path = os.path.join(target_dir, f.replace('.jpg', '.txt'))
+        with open(file_path, "w+"):
+            pass
+
+##To write text on images:
+cv::putText(im, "Dark_1-"+to_string(meanVal), cv::Point(100, 150), cv::FONT_HERSHEY_TRIPLEX, 1,cv::Scalar(255,255,255),3);
+   cv::putText(im, "Dark_2-"+to_string(mean_b), cv::Point(100, 250), cv::FONT_HERSHEY_TRIPLEX, 1,cv::Scalar(255,255,255),3);
+   cv::putText(im, "Foggy-"+to_string(fog_value), cv::Point(100, 350), cv::FONT_HERSHEY_TRIPLEX, 1,cv::Scalar(255,255,255),3);
+   cv::imwrite(filenames[i],im);
+
+
+
+latest vids:
+/nfs/nas2VehiScan/DataRepo/DL_Models/VA_Models/updated_deepstreamModels/primary/custom/VTDet2FastVIDS-20230322
+
+VIDS MODEL training path:
+/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/Vehtype-Lokesh/vtyolov3
+
+For the above view, we can get optimum results for person detection with roi - () in 20 meters range after that we can see 40% miss within the range of (20-25 meters) 
+
+For the above view, we can get optimum results for person detection with roi - () in 20 meters range after that we can see 40% miss within the range of (20-25 meters) 
+Optimum Person Detection - Within 20 meters
+
+Person Roi - 105,192
+
+Minimum Person Detection - In range (20 -25 meters) we can see 40 % miss.
+
+Person Roi - 28,78
+
+-----
+
+Person Roi - 28,78
+
+Optimum Person Detection - Within 25 meters
+
+Minimum Person Detection - In range (25 -35 meters) we can see 30 % miss.
+
+
+--------VIDS_NIGHT_FILE--------------
+
+Dataset:
+1./nfs/nas2VehiScan/SahibSingh/Harshit_Kutaula/vids_nhai_correction/all_night_data
+
+Txt file:
+2./nfs/nas2VehiScan/SahibSingh/Harshit_Kutaula/vids_nhai_correction/all_night_data.txt
+
+./darknet detector train ../../vids_night_VTDet2Fast/obj.data ../../vids_night_VTDet2Fast/VTDet2FastVIDS.cfg ../../vids_night_VTDet2Fast/vtyolov4_last.weights -clear 1 2>&1  | tee -a ../../trainingLog2023s0413.log
+
+./darknet detector train ../../Manu/YOLO_PERSON_FACE/sgaurav/vids_night_VTDet2Fast/obj.data ../../Manu/YOLO_PERSON_FACE/sgaurav/vids_night_VTDet2Fast/VTDet2FastVIDS.cfg ../../Manu/YOLO_PERSON_FACE/sgaurav/vids_night_VTDet2Fast/vtyolov4_last.weights -dont_show -clear 1 2>&1 | tee -a ../../Manu/YOLO_PERSON_FACE/sgaurav/vids_night_VTDet2Fast/trainingLog2023s0413.log
+
+
+./darknet detector train ../../Manu/YOLO_PERSON_FACE/sgaurav/vids_day_night_20230414/obj.data ../../Manu/YOLO_PERSON_FACE/sgaurav/vids_day_night_20230414/VTDet2FastVIDS.cfg ../../Manu/YOLO_PERSON_FACE/sgaurav/vids_day_night_20230414/VTDet2FastVIDS.weights -dont_show  | tee -a ../../Manu/YOLO_PERSON_FACE/sgaurav/vids_day_night_20230414/trainingLog2023s0414.log
+
+##VIDS_DAY_NIGHT_DATA_ANALYSIS:
+Below command calculates all the items present in the directory ( folder wise )
+(base) [sgaurav@blazerwifi crop_all_data_day_night]$ find -maxdepth 1 -type d | sort | while read -r dir; do n=$(find "$dir" -type f | wc -l); printf "%4d : %s\n" $n "$dir"; done
+78504 : .
+  23 : ./11
+5287 : ./autorickshaw
+1640 : ./bus
+27796 : ./car
+1280 : ./cycle
+ 977 : ./cyclerickshaw
+1817 : ./erickshaw
+8497 : ./person
+4043 : ./scv
+ 818 : ./tractor
+3874 : ./truck
+22452 : ./twowheeler
+(base) [sgaurav@blazerwifi crop_all_data_day_night]$ 
+
+## TO append class labels at the end of txt file:
+
+%s/g$/g\ 1/g
+
+##Orion Tmux caffe training
+
+  841  ls /nfs/nas2VehiScan/IMPData/Manu/Face_Mask_Detection/VehType/
+  842  cp /nfs/nas2VehiScan/IMPData/Manu/Face_Mask_Detection/VehType/resnet18.caffemodel /nfs/nas2VehiScan/IMPData/Manu/Face_Mask_Detection/VehType/architecture.prototxt /nfs/nas2VehiScan/IMPData/Manu/Face_Mask_Detection/VehType/solver.prototxt ./
+  843  ls
+  844  vi solver.prototxt 
+  845  rm -f architecture.prototxt 
+  846  cp /nfs/nas2VehiScan/IMPData/Manu/Face_Mask_Detection/VehType/architecture1.prototxt ./
+  847  vi solver.prototxt 
+  848  mkdir models
+  849  vi solver.prototxt 
+  850  vi architecture1.prototxt 
+  851  vi bvlc_alexnet/trainCaffe.sh 
+  852  #caffe train 
+  853  vi bvlc_alexnet/trainCaffe.sh 
+  854  caffe train -solver solver.prototxt -weights resnet18.caffemodel 2>&1 | tee -a trainingLog20230421.log
+  855  vi architecture1.prototxt 
+  856  vi bvlc_alexnet/lmdb.sh 
+  857  rm -rf data/*
+  858  . bvlc_alexnet/lmdb.sh 
+  859  ls
+  860  vi trainingLog20230421.log 
+  861  tmux
+  862  pwd
+  863  tmux
+
+--------------------------------
+
+1.set env
+2. make changes in lmdb.sh
+3. ./lmdb.sh
+4. . makeImageNet.sh
+5. in solver.prototxt
+-  make the changes architecture name etc in the file.
+
+
+
+
+-----------------------------------
+
+
+1./nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/resnet
+
+2.caffe train -solver solver.prototxt -weights resnet18.caffemodel 2>&1 | tee -a trainingLog20230421.log
+
+
+#Classifier Accuracy on other machine
+
+1.vehant@epu008
+-vehant@vt
+
+./TestClassify -i /gaurav/OldDataExtractionWithoutXML/Back/Day/Red -model /gaurav/vehcolor-custom-trained-20220824/caffe/CaffeClassification.conf  -framework Caffe
+
+
+##To change permission:
+
+- For files inside the directory
+chmod -R 755 ./
+
+-For Folders
+chmod -R 755 Foldername
+
+#TO check if image size is 0 or not(corrupted)
+-find *.jpg -size 0 -print -delete
+
+# To rename all filse with altering something in file name
+-for f in *.jpg; do mv "$f" "$(echo "$f" | sed s/IMG/VACATION/)"; done
+
+# to remove 2nd column from yolo annotation if confidence is there in txt file
+sed -i 's/\([^ ]* *\)[^ ]* */\1/' *.txt
+
+#To remove anything before a particular amount of space in all txt files
+sed -i  's/^.\{0,35\}/ /g' *.txt
+
+
+#Use this script to extract images from xmls
+/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/SiteCrops/CarColorData/getRoiFromXml_fromEVandALxmls.py
+
+###
+1.omega - /nfs/nas2VehiScan/DataRepo/Training_Data/FebriEye/Classification/VehColor/17_08_2022_Color_With_Vehicle_Type_Out/Black_Out/images/TwoWheeler
+
+2.
+
+Black - 10024
+Blue - 321
+Brown -102
+Green -13
+Grey -278
+Purple - 35
+Red -335
+White - 769
+Yellow - 9
+Orange -15
+
+train/val split:
+/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/Data/colour_twowheeler_classifier/images
+###
+
+
+vehtype classifier new run on images
+[vehant@EPU008 gaurav]$ ./TestClassify -i OldDataExtractionWithoutXML/Back/Day/Red -model vehitype/CaffeClassification.conf  -framework Caffe
+
+
+###
+We can now convert videos to h264 on helix as well
+Rahul has just set it up
+
+sample statement
+ffmpeg -i moping-1.mp4 -c:v libx264 moping-1.h264
+
+##new ffmpeg
+ffmpeg_org -i /nfs/nas2VehiScan/DataRepo/Site_Raw_Data/PPEye/Hygiene/VA_DATA/sitedata/Mysore_night_data/file_2024-06-14_22-00-01.avi -c:v libx264 /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/videos_helix/mysore_night_daata_file_2024-06-14_22-00-01.h264
+
+DLC run on helix for accuracy
+
+cd $DLC_PATH
+
+./bin/TestClassify -i hardhat_helmet_classifier/no_helmet -model hardhat_helmet_classifier/opencv.conf -framework OpenCV
+
+---------------------Run Classifier Test on Helix----------------------
+
+ 500  tmux attach
+  501  cd gaurav_deepstream/ppeye_new/ppeye/
+  502  . set_env_vaengine.sh 
+  503  cd $DLC_PATH
+  504  vim dlc-config 
+  505  vim dlc-config 
+  506  make detector && make classifier 
+  507  make clean; make distclean;make detector && make classifier
+  508  make 
+  509  vi Makefile
+  510  make TestDetectClassify
+  511  mkdir bin
+  512  make TestDetectClassify
+  513  ls bin/
+  514  ./bin/TestDetectClassify 
+
+
+/home/okean/gaurav_deepstream/SSM_videos/overlaid
+
+/nfs/nas2VehiScan/DataRepo/Site_Raw_Data/PPEye/Hygiene/VA_DATA/sitedata/GMDA$
+
+http://10.77.3.232/vehant/video-analytics/-/wikis/VIDS-Detector-Accuracy-&-Benchmarking
+
+https://wandb.ai/ayush-thakur/dl-question-bank/reports/How-to-Handle-Images-of-Different-Sizes-in-a-Convolutional-Neural-Network--VmlldzoyMDk3NzQ
+
+-Raj Vehcolor Data:
+
+ls /nfs/nas2VehiScan/DataRepo/Training_Data/FebriEye/Classification/VehColor/
+
+
+###Foggy -darkness script####
+
+/home/okean/gaurav_deepstream/cpy_full_fog.cpp
+
+
+Steps : 
+
+1. Export path if any issue :
+
+export PKG_CONFIG_PATH=/opt/intel/openvino_2020.1.023/opencv/lib/pkgconfig/
+export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/opt/intel/openvino_2020.1.023/opencv/lib/
+
+2.Compile:
+
+g++ -std=c++11 ZoneMask_new.cpp `pkg-config --cflags --libs /opt/intel/openvino_2020.1.023/opencv/lib/pkgconfig/opencv.pc`  -o zmn_1
+
+3.Run
+
+./zmn_1
+
+
+####
+
+-start conda on omega:
+
+1.~/.bashrc
+
+2. conda installation path /nfs/systems/sgaurav/anaconda3/
+
+##Use yoloParser which is there in your mnt/sgaurav/path of .so file
+
+ssh sgaurav@10.77.1.61 - omega
+
+
+
+#TO generate the videos with hack
+
+1.see the PPTrans_R297.txt file and set trans path in config and delete this every iteration to check if we are getting the same id again and again.Then check the logs PPEngine or eventJson logs and get the id for that particular Transid 
+2.Then make and if else condition to dont allow analytics run on this particular id.
+
+http://10.77.3.232/vehant/video-analytics/-/wikis/VA-Logs
+
+# night videos latest
+
+/nfs/nas2VehiScan/Okean/SiteObservation/Noida/rain_night_video_pur
+
+/nfs/nas2VehiScan/SahibSingh/Sonu_Kumar/person_harness_jacket_data
+
+
+####ip's###
+
+1. helix - 10.77.3.93
+2.local - 10.77.2.137
+3. omega - 10.77.1.61
+4.arrow -10.77.1.171
+5.argo - 10.77.1.199
+6.ignis - 10.77.1.175
+
+#For checking fps on videos on helix:
+
+/opt/ffmpeg-2.8.8_x264_v142/bin/ffprobe with_helmet.mp4
+
+#For checking fps on videos on local
+
+/opt/ffmpeg-2.8.8_x264_v142-qsv/bin/ffprobe anand_jacket_alert_video.mp4
+
+
+#To check if these classes are in these txt inside a folder
+grep -E '27|24|28' *.txt
+
+#Omega darknet training in new path
+
+/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/Omega/darknet_new
+. set_env.sh
+
+#TO access nfs videos at local server
+sudo systemctl restart autofs
+
+
+#To remove class labels from the end of train/val file using sed
+ sed 's/[012]$//' xet.txt
+
+#if need to stash things and pop and make 
+git stash
+git pull origin deep_stream_sub_master
+git stash pop
+. make 10 
+
+#To check opencv version in PPEngine:
+
+find . -name "version.hpp"
+./include/opencv2/core/version.hpp
+./include/opencv2/dnn/version.hpp
+
+cat ./include/opencv2/core/version.hpp
+
+#Generate  ssh-keygen
+
+1.ssh-keygen
+
+2.ssh-copy-id rajagopalar@arrow
+
+3.ssh -X rajagopalar@arrow
+
+
+
+#ssam setup in argo with sam env i guess or ssamG
+
+#sam setup in omega
+
+##To check space and how much its taking in folder wise 
+
+du -sch *
+
+
+#To make yml from conda env
+1.Activate the env first
+2.conda env export > environment_sam.yml
+
+##To clone ppeye in new folder :
+1.mkdir folder name
+2.inside that folder , type git clone --single-branch --branch sgaurav.va http://cometdrive.vehant.in:10101/vehant/ppeye.git
+3.then git pull origin deep_stream_sub_master
+sgaurav
+sgaurav7#
+4.make_project 10
+5. done  g!u@a#v1
+
+
+##File System Size Used Space Available
+du -f | grep - V snap
+
+#to extract frames from ffmpeg using helix
+ffmpeg -i Pcount_251._tiny_yolo.avi Frames/frame%06d.jpg
+
+##Raj To get the yolo detections on the input video output as video
+
+python generate_crops.py --model-cfg ~/gaurav_deepstream/yolov4_standard_detector_files/yolov4_tiny/yolov4-tiny.cfg --model-weights ~/gaurav_deepstream/yolov4_standard_detector_files/yolov4_tiny/yolov4-tiny.weights --output-dir analysisFrames_608_608_tiny/ --video Pcount_251.h264
+
+
+#Vehtype
+1.Jammu var new video seg by detector (Argo)
+
+/home/okean/gaurav_deepstream/jammu_var_new_video_seg_by_detector
+
+- Extracted frames from detector seg with height & width condition
+2.~/gaurav_deepstream/jammu_var_new_video_seg_by_detector/test_set_jammu_on_height_width_basis/
+
+3.Running code + jammu_sonu_seg_data
+/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/pytorch_20240129/20240205_pytorch_sorted/test_var/jammu_test_var/
+
+4./nfs/nas2VehiScan/DataRepo/Training_Data/FebriEye/Classification/VehType/VIDS/test_data/scv/
+/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/Data/vehorient_test_crop/
+
+/nfs/nas2VehiScan/DataRepo/Training_Data/FebriEye/Classification/VehType/VIDS/test_data
+
+
+#concat videos from ffmpeg helix
+
+export LD_LIBRARY_PATH=/opt/ffmpeg4.4/lib/:$LD_LIBRARY_PATH
+ffmpeg -f concat -i /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/Data/jammu_5_videos_set/input.txt -c cop output.mp4
+
+#new
+in ben.txt append file 'video_name' and save
+Ctrl +V copy till below then shift i and then add the text you want then 2 times escape
+/usr/bin/ffmpeg_org -f concat -safe 0 -i ben.txt -codec copy ben.mp4
+
+
+
+#copy data from multiple folders to one for xml & jpg
+ cp */*[0-9].jpg */*xml combined/
+
+#rsync data
+rsync -avPhr jammu_past_3_days_alert_frames_pickup_bus_truck_crops/ sonuk@10.33.11.185:~/
+
+./TestClassify -i raj_vehcolor_test_data/Set1_VehColor_9C/White -model color_model_Raj/caffe/alexnet_vehcolor/CaffeClassification.conf  -framework Caffe
+
+
+######Rexton db and log findings###
+
+1.psql -U okean_dbuser okean_db
+2.select * from okean_sch.transF_event_details  where event_id ='EV_E001C0010-20240315003762';
+3.bzgrep -i  E001C0010-20240315005471  C001_VAEngine.log.1.bz2
+4.okean@vehant-HP-EliteDesk-800-G6-Tower-PC:/var/okean/log/deepstreamLog1$ vim C001_VAEngine.log.1.bz2
+5.okean@rexton , pass -okean@135 or okean@235
+dashboard - https://10.77.1.107/
+
+#to check DS version:
+
+/opt/nvidia/deepstream/deepstream
+
+##git commited file uncommit and then push
+
+git reset HEAD^ -- path/to/file
+git commit --amend --no-edit
+
+
+Binary from CI/CD:
+
+/nfs/nas2VehiScan/Okean/alpha_ds_releases/dsinit_16_04_2024_a762f617
+
+#Data Path VA_DATA:
+
+/nfs/nas2VehiScan/DataRepo/Site_Raw_Data/PPEye/Hygiene/VA_DATA/
+
+#Jammu site data reverse copy
+
+scp -r okean@4.224.17.117:/nfs/Data0/vehtype/SCV/ .
+
+#jammu query to extract data
+
+select event_id  from okean_sch.trans_event_details where event_type='ET_VEHICLE' and event_attr -> 'vehicle_attr' -> 'general' ->> 'type' = 'TRUCK' anD timestamp_start >= '15-may-2024 00:00' and timestamp_end <= '20-may-2024 23:00:00' and cam_id = 'C020';
+
+#Helmet Test Data
+/home/vehant/gaurav/overalls_no_overalls_20231221/shivamnExp/classifier_data_helmet_test/new_test_Data_shared_2023127/classifier_data_helmet_test_new/no_helmet/
+
+
+Fix Indentation in VIM:
+
+Actually I used vim to fix the indentation:
+
+* Start in the top of a file (to get there, press gg anywhere in the file.). 
+* Then press =G, and Vim will fix the indentation in the whole file.
+* If you don't start in the beginning of the file, it will fix indentation from current line to the bottom of file.
+ta
+
+1. onnx in python inference
+
+yolo predict task=detect model=yolov9-e.onnx imgsz=640 source=onnx/yolov9-onnx/assets/people_count.mp4
+
+2.pt in python inference 
+
+python main.py --source assets/people_count.mp4 --weights weights/yolov9-e.onnx --classes weights/metadata.yaml --video
+
+python detect.py --source video_20240209_040006_10.122.11.81.mp4
+
+3. DS
+
+#DEBUG LOGS
+
+When using tail -f or cat on engine log to see any particular event in log, we can see ID of object by running following command
+
+tail -f <CAM_ID>_VAEngine.log | grep "Type: <EVENTTYPE>" -A 1
+
+If you want to see only IDs, you can add
+
+tail -f <CAM_ID>_VAEngine.log | grep "Type: <EVENTTYPE>" -A 1 | grep objects -i
+
+Useful for debugging
+
+#argo_files
+/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/argo_files/
+
+# to generate labels with yolov9 with confidence
+
+(yolov9) sgaurav@omega:/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/yolov9/yolov9/runs/detect/exp11/labels$ python detect.py --source img/ --save-txt --save-conf
+
+#map test on omega
+/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/argo_files/vids_map_test/mAP_vt_new/
+
+#chrome
+chrome://flags/#disable-force-dark
+
+#site videos path
+/nfs/nas2VehiScan/DataRepo/Site_Raw_Data/PPEye/Hygiene/VA_DATA/sitedata/
+
+#status check_kafka
+systemctl status kafka
+
+#kumbh segregated videos
+/nfs/nas2VehiScan/Okean/SiteObservation/Nikhil/Magh_Kumbh_Mela/
+
+#sahi with txt dump code run
+(yolov8_seg_gpu) sgaurav@arrow:/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/Yolov8_object_detection/ultralytics/examples/YOLOv8-SAHI-Inference-Video$ python yolov8_sahi_txt.py --weights models/yolov8n.pt --source /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/Data/kumbh/batch_1/copy/
+
+#v7 training steps
+arrow:
+
+python train.py --img-size 640 --cfg cfg/training/yolov7x.yaml --hyp data/hyp.scratch.custom.yaml --batch 4 --epochs 100 --data data/yolov7_fire_smoke.yaml --weights yolov7.pt --workers 24 --name yolo_fire_smoke
+
+#all zone event config
+/nfs/nas2VehiScan/IMPData/Yoginderd/ZoneConfig_sample.xml
+
+sgaurav@vehant.com
+vehgausin7#
+
+###run gdb in deepstream folder in VS
+CUDA_VER?=
+ifeq ($(CUDA_VER),)
+  $(error "CUDA_VER is not set")
+endif
+CC:= g++ -g
+NVCC:=/usr/local/cuda-$(CUDA_VER)/bin/nvcc
+
+
+###launch.json
+
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/nfs/systems/sgaurav/gaurav_deepstream/new_merge_change/ppeye/initModule/dsinit",
+            "args": ["/nfs/systems/sgaurav/gaurav_deepstream/new_merge_change/ppeye/DSConfig_gaurav.xml"],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+
+    ]
+}
+
+Generating onnx of combined detector in yolov7
+
+(yolov7_my) sgaurav@ignis:/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/yolov7_repo/combined_detector_train/yolov7$ python cpy_export_YoloV7_changes.py --dynamic -w best_new_trained_20240924.pt  
+
+#export onnx new way yolov7
+
+(yolov7_my) sgaurav@ignis:/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/yolov7_repo/yolov7$ python cpy_export_YoloV7_changes.py --dynamic -w best_20240925.pt
+
+
+#kumbh prayagraj videos
+machine:ssh -X sgaurav@blazerwifi:/mnt/Data2$ ssh -X okean@10.77.14.16
+path:/mnt/data2/Prayagraj/Day_videos_8am/
+
+#trim video_local
+sgaurav@blazerwifi:/mnt/Data2$ #/opt/ffmpeg-2.8.8_x264_v142-qsv/bin/ffmpeg -i EPU1R2970-20241008121439.mp4 -ss 00:00:20 -t 00:00:42 -c:v copy -c:a copy EPU1R2970-20241008121439_trim.mp4
+
+
+#to make video according to fps:
+ffmpeg_org -i /nfs/nas2VehiScan/DataRepo/Site_Raw_Data/PPEye/Hygiene/VA_DATA/sitedata/Kumbh_POC_june24/Hanuman_Mandir_Area/video_1_20241008_133001.avi -r 10  -c:v  libx264 /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/videos_helix/Hanuman_Mandir_Area_video_1_20241008_133001_10fps.h264
+
+#to remove particular line from a txt file
+sed -i '/\/nfs\/nas2VehiScan\/IMPData\/Manu\/YOLO_PERSON_FACE\/sgaurav\/Data\/kumbh_data_received_from_annotations_20241009_batch_8_initial\//d' filename.txt
+
+
+#to generate overlay viedo in yolov7 with pt on some video then use the current detect.py
+#then extract frames from the video generated using helix
+
+(yolov7_my) sgaurav@ignis:/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/yolov7_repo/combined_detector_train/yolov7$ python detect.py --weights /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/yolov7_repo/combined_detector_train/yolov7/runs/train/yolov7-custom_640_640_again_202409269/weights/best.pt --source /nfs/nas2VehiScan/Okean/SiteObservation/Nikhil/Magh_Kumbh_Mela/People_Count/output_Day.mp4 --save-txt 
+
+#to match labels with frames extraction for above 
+/opt/ffmpeg-2.8.8_x264_v142/bin/ffmpeg -i /nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/yolov7_repo/combined_detector_train/yolov7/runs/detect/exp91/output_Day.mp4 Frames/output_Day_%d.jpg
+
+#after creating new feature branch from developer then git clone into this branch using this
+
+#sgaurav@helix:~/gaurav_deepstream/new_merge_change/ppeye/feature/okean$ git branch
+* develop.sgaurav
+sgaurav@helix:~/gaurav_deepstream/new_merge_change/ppeye/feature/okean$ git clone --single-branch --branch develop.sgaurav http://cometdrive.vehant.in:10101/vehant/okean.git
+
+#git push to develop branch
+sgaurav@helix:~/gaurav_deepstream/new_merge_change/ppeye/feature/okean$ git push origin develop.sgaurav
+
+#binaries used
+/nfs/nas2VehiScan/IMPData/Manu/YOLO_PERSON_FACE/sgaurav/Data/binaries_used/
+
